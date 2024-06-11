@@ -14,6 +14,61 @@ app.get('/', (req, res) => {
     res.json({ message: 'Olá, Express!'})
 })
 
+const crypto = require('crypto')
+const Usuario = require('./colecoes/Usuario')
+const criptografia = {
+    algorithm: "aes256",
+    secret: "chaves",
+    type: "hex"
+}
+
+async function criptografar(senha) {
+    return new Promise((resolve, reject) => {
+        const gravarCriptografia = crypto.createCipher(criptografia.algorithm, criptografia.secret)
+        let dadoEncriptado = '';
+
+        gravarCriptografia.on('readable', () => {
+            let bits
+            while (null !== (bits = gravarCriptografia.read())) {
+                dadoEncriptado += bits.toString(criptografia.type)
+            }
+        })
+
+        gravarCriptografia.on('end', () => {
+            resolve(dadoEncriptado)
+        })
+
+        gravarCriptografia.on('error', (error) => {
+            reject(error)
+        })
+
+        gravarCriptografia.write(senha)
+        gravarCriptografia.end()
+    })
+}
+
+app.post('/usuarios', async (req, res) => {
+    let { email, senha } = req.body
+
+    try {
+        let novaSenha = await criptografar(senha)
+        const usuarios = { email, senha: novaSenha }
+        await Usuario.create(usuarios)
+        res.status(201).json({ Retorno: 'Usuário inserido no sistema' })
+    } catch (error) {
+        res.status(500).json({ Erro: error })
+    }
+})
+
+app.get('/usuarios', async (req, res) => {
+    try {
+        const usuarios = await Usuario.find()
+        res.status(200).json(usuarios)
+    } catch (error) {
+        res.status(500).json({ Erro: error })
+    }
+})
+
 const Cota = require('./colecoes/Cota')
 
 app.post('/cotas', async (req, res) => {
