@@ -69,7 +69,9 @@ app.get('/usuarios', async (req, res) => {
     }
 })
 
+
 const Cota = require('./colecoes/Cota')
+
 
 app.post('/cotas', async (req, res) => {
     const { fundoImob, valor, tipo } = req.body
